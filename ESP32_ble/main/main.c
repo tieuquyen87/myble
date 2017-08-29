@@ -62,7 +62,7 @@ void blink_task(void *pvParameter) {
 
 
 void app_main() {
-
+	nvs_flash_init();
 	xTaskCreate(blink_task, "blink_task", 10000, NULL, 1, NULL);
 
     esp_err_t ret;

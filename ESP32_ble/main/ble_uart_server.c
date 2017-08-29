@@ -51,6 +51,20 @@ uint8_t char2_str[GATTS_CHAR_VAL_LEN_MAX] = {0x11,0x22,0x33};
 uint8_t descr1_str[GATTS_CHAR_VAL_LEN_MAX] = {0x00,0x00};
 uint8_t descr2_str[GATTS_CHAR_VAL_LEN_MAX] = "Hallo ESP32";
 
+//#define DEMO_STA_SSID      "<< SSID >>
+//#define DEMO_STA_PASSWORD "<< Password >>" 
+char DEMO_STA_SSID[64];
+char DEMO_STA_PASSWORD[64];
+wifi_mode_t wifimode;//= WIFI_MODE_STA;
+char szURL[] = "api.thingspeak.com";
+ip_addr_t ip_Addr;
+ip4_addr_t ip;
+ip4_addr_t gw;
+ip4_addr_t msk;
+bool bConnected = false;
+bool bDNSFound = false;
+
+
 esp_attr_value_t gatts_demo_char1_val = {
 	.attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
 	.attr_len		= sizeof(char1_str),
@@ -81,8 +95,8 @@ esp_attr_value_t gatts_demo_descr2_val = {
 static uint8_t ble_service_uuid128[BLE_SERVICE_UUID_SIZE] = {
     /* LSB <--------------------------------------------------------------------------------> MSB */
     //first uuid, 16bit, [12],[13] is the value
-	// 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x01, 0x00, 0x40, 0x6E,
-     0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xAB, 0xCD, 0x00, 0x00,
+	 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x01, 0x00, 0x40, 0x6E,
+    // 0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xAB, 0xCD, 0x00, 0x00,
     //0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
@@ -286,6 +300,7 @@ void char2_notify_handle(esp_gatt_if_t gatts_if, uint16_t conn_id) {
 }
 
 void char1_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
+	printf("\n####################### CONFIG WIFI: \n");
 	ESP_LOGI(GATTS_TAG, "char1_write_handler %d - %x\n", param->write.handle,param->write.handle);
 
 	if (gl_char[0].char_val!=NULL) {
@@ -294,8 +309,17 @@ void char1_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 		for (uint32_t pos=0;pos<param->write.len;pos++) {
 			gl_char[0].char_val->attr_value[pos]=param->write.value[pos];
 		}
+		gl_char[0].char_val->attr_value[param->write.len]='\0';
 		ESP_LOGI(TAG, "char1_write_handler %.*s", gl_char[0].char_val->attr_len, (char*)gl_char[0].char_val->attr_value);
+		if(statustransfer == 0){
+			memset(datatransferr,'\0',128); 
+			//memset(some_ptr, '\0', 12);
+			statustransfer++;
+		}
+		strcat (datatransferr,(char*)gl_char[0].char_val->attr_value);
+		
 	}
+
 	ESP_LOGI(GATTS_TAG, "char1_write_handler esp_gatt_rsp_t\n");
 	notify_gatts_if = gatts_if;
 	notify_conn_id = param->write.conn_id;
@@ -307,6 +331,46 @@ void char1_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
     } else {
     	char2_notify_handle(gatts_if, param->write.conn_id);
     }
+	/*** check*****/
+	if(statustransfer > 0){
+		unsigned len = (unsigned)strlen(datatransferr);
+		printf("\nwriteeeeeeeeeeeee: %s - len %d\n",datatransferr,len);
+		if(datatransferr[len-1]==']'){
+			printf("\nwriteeeeeeeeeeeee endddddddddddd : %s \n ",datatransferr);
+			statustransfer = 0;
+			// get mode
+			char *tmp = &datatransferr; tmp = tmp+1;
+			printf("\t tmp = %s\n",tmp);
+			char * pch;			pch=strchr(tmp,',');
+			int lenmode = pch-tmp;
+			if(lenmode == 3 && strncmp(tmp,"STA",lenmode)==0){
+				printf("\t STA MODE \n");
+				wifimode= WIFI_MODE_STA;
+				tmp = tmp+	lenmode+1;	
+				pch=strchr(tmp,',');
+				lenmode = pch-tmp;
+				strncpy ( DEMO_STA_SSID, tmp, lenmode) ;
+				DEMO_STA_SSID[lenmode] = '\0';
+				tmp = tmp+	lenmode+1;	
+				pch=strchr(tmp,']');
+				lenmode = pch-tmp;
+				strncpy ( DEMO_STA_PASSWORD, tmp, lenmode) ;
+				DEMO_STA_PASSWORD[lenmode] = '\0';
+				printf("\t SSID = %s - PASS : %s\n",DEMO_STA_SSID,DEMO_STA_PASSWORD);
+				mainTaskkk();
+			}else if(strncmp(tmp,"RESTART",7)==0){
+				
+				printf("Restarting now.\n");
+				fflush(stdout);
+				esp_restart();
+			}
+
+
+			
+		}
+		
+	}
+	/***************/
 }
 
 void char2_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
@@ -647,3 +711,121 @@ int getCurrentStatus(){
 int getTimeBlink(){
 	return timeblink;
 }
+
+
+
+esp_err_t wifi_event_cb(void *ctx, system_event_t *event)
+{
+    if( event->event_id == SYSTEM_EVENT_STA_GOT_IP ) {
+        ip = event->event_info.got_ip.ip_info.ip;
+        gw = event->event_info.got_ip.ip_info.gw;
+        msk = event->event_info.got_ip.ip_info.netmask;
+        bConnected = true;
+    }
+    
+    return ESP_OK;
+}
+
+void dns_found_cb(const char *name, const ip_addr_t *ipaddr, void *callback_arg)
+{
+    ip_Addr = *ipaddr;
+    bDNSFound = true;
+}
+
+
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+#include "esp_wifi.h"
+#include "esp_log.h"
+#include "esp_event_loop.h"
+
+/*set the ssid and password via "make menuconfig"*/
+#define DEFAULT_SSID "linksys"
+#define DEFAULT_PWD "12081987"
+
+#if CONFIG_POWER_SAVE_MODEM
+#define DEFAULT_PS_MODE WIFI_PS_MODEM
+#elif CONFIG_POWER_SAVE_NONE
+#define DEFAULT_PS_MODE WIFI_PS_NONE
+#else
+#define DEFAULT_PS_MODE WIFI_PS_NONE
+#endif /*CONFIG_POWER_SAVE_MODEM*/
+
+
+//static const char *TAG = "power_save";
+
+
+static esp_err_t event_handler(void *ctx, system_event_t *event)
+{
+    switch(event->event_id) {
+    case SYSTEM_EVENT_STA_START:
+	ESP_LOGI(TAG, "SYSTEM_EVENT_STA_START");
+	ESP_ERROR_CHECK(esp_wifi_connect());
+	break;
+    case SYSTEM_EVENT_STA_GOT_IP:
+	ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
+	ESP_LOGI(TAG, "got ip:%s\n",
+		ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
+		ip = event->event_info.got_ip.ip_info.ip;
+        gw = event->event_info.got_ip.ip_info.gw;
+        msk = event->event_info.got_ip.ip_info.netmask;
+		printf("Got IP: %s\n", inet_ntoa( ip ) );
+		printf("Net mask: %s\n", inet_ntoa( msk ) );
+		printf("Gateway: %s\n", inet_ntoa( gw ) );
+		bConnected = true;
+		/*
+		    
+    IP_ADDR4( &ip_Addr, 0,0,0,0 );
+    printf("Get IP for URL: %s\n", szURL );
+	
+    dns_gethostbyname(szURL, &ip_Addr, dns_found_cb, NULL );
+    while( !bDNSFound )
+        ;
+        
+    printf( "DNS found: %i.%i.%i.%i\n", 
+        ip4_addr1(&ip_Addr.u_addr.ip4), 
+        ip4_addr2(&ip_Addr.u_addr.ip4), 
+        ip4_addr3(&ip_Addr.u_addr.ip4), 
+        ip4_addr4(&ip_Addr.u_addr.ip4) );
+	*/	
+        break;
+    case SYSTEM_EVENT_STA_DISCONNECTED:
+	ESP_LOGI(TAG, "SYSTEM_EVENT_STA_DISCONNECTED");
+	ESP_ERROR_CHECK(esp_wifi_connect());
+	break;
+    default:
+        break;
+    }
+    return ESP_OK;
+}
+void mainTaskkk()
+{
+	tcpip_adapter_init();
+    //ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
+	esp_event_loop_init(event_handler, NULL);
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+    wifi_config_t wifi_config = {
+	.sta = {
+	    .ssid = DEFAULT_SSID,
+	    .password = DEFAULT_PWD
+	},
+    };
+	strcpy( (char *)wifi_config.sta.ssid, DEMO_STA_SSID );
+    strcpy( (char *)wifi_config.sta.password, DEMO_STA_PASSWORD );
+ 
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    ESP_LOGI(TAG, "esp_wifi_set_ps().");
+    esp_wifi_set_ps(DEFAULT_PS_MODE);
+}
+/*
+void app_main()
+{
+    // xTaskCreatePinnedToCore( pvTaskCode, pcName, usStackDepth, pvParameters, 
+    //     uxPriority, pxCreatedTask, xCoreID )
+    xTaskCreatePinnedToCore(&mainTask, "mainTask", 2048, NULL, 5, NULL, 0);
+}*/
