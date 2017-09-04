@@ -12,8 +12,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>. *
  */
-#ifndef BLE_UART_SERVER_H_
-#define BLE_UART_SERVER_H_
+#ifndef BLE_SERVER_H_
+#define BLE_SERVER_H_
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "lwip/inet.h"
@@ -29,7 +29,7 @@ extern "C" {
 #define GATTS_CHAR_NUM		2
 #define GATTS_NUM_HANDLE     1+(3*GATTS_CHAR_NUM)
 
-#define BLE_DEVICE_NAME            "ESP32_UART_SERVER"
+#define BLE_DEVICE_NAME            "ACR_ESP32_SERVER"
 #define BLE_MANUFACTURER_DATA_LEN  4
 
 #define GATTS_CHAR_VAL_LEN_MAX		22
@@ -59,4 +59,4 @@ esp_err_t wifi_event_cb(void *ctx, system_event_t *event);
 }
 #endif
 
-#endif /* BLE_UART_SERVER_H_ */
+#endif /* BLE_SERVER_H_ */

@@ -37,7 +37,7 @@
 
 #include "sdkconfig.h"
 
-#include "ble_uart_server.h"
+#include "ble_server.h"
 
 #define GATTS_TAG "GATTS"
 
