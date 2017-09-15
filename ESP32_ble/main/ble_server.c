@@ -95,7 +95,8 @@ esp_attr_value_t gatts_demo_descr2_val = {
 static uint8_t ble_service_uuid128[BLE_SERVICE_UUID_SIZE] = {
     /* LSB <--------------------------------------------------------------------------------> MSB */
     //first uuid, 16bit, [12],[13] is the value
-	 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x01, 0x00, 0x40, 0x6E,
+	// 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x01, 0x00, 0x40, 0x6E,
+	0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x02, 0x21, 0x40, 0x6E,
     // 0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xAB, 0xCD, 0x00, 0x00,
     //0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
@@ -170,8 +171,10 @@ static struct gatts_profile_inst gl_profile = {
 /* One gatt-based profile one app_id and one gatts_if, this array will store the gatts_if returned by ESP_GATTS_REG_EVT */
 static struct gatts_char_inst gl_char[GATTS_CHAR_NUM] = {
 		{
-				.char_uuid.len = ESP_UUID_LEN_128, // RX
-				.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x02, 0x00, 0x40, 0x6E },
+				.char_uuid.len = ESP_UUID_LEN_128, // wifi
+				//.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x08, 0x12, 0x40, 0x6E },
+				//.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x02, 0x00, 0x40, 0x6E },
+				.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x03, 0x21, 0x40, 0x6E },
 				.char_perm = ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 				.char_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY,
 				.char_val = &gatts_demo_char1_val,
@@ -189,8 +192,10 @@ static struct gatts_char_inst gl_char[GATTS_CHAR_NUM] = {
 				.descr_write_callback=descr1_write_handler
 		},
 		{
-				.char_uuid.len = ESP_UUID_LEN_128,  // TX
-				.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x03, 0x00, 0x40, 0x6E },
+				.char_uuid.len = ESP_UUID_LEN_128,  // notification
+				//.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x09, 0x12, 0x40, 0x6E },
+				//.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x03, 0x00, 0x40, 0x6E },
+				.char_uuid.uuid.uuid128 =  { 0x9E, 0xCA, 0xDC, 0x24, 0x0E, 0xE5, 0xA9, 0xE0, 0x93, 0xF3, 0xA3, 0xB5, 0x04, 0x21, 0x40, 0x6E },
 				.char_perm = ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
 				.char_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY,
 				.char_val = &gatts_demo_char2_val,
@@ -208,6 +213,16 @@ static struct gatts_char_inst gl_char[GATTS_CHAR_NUM] = {
 				.descr_write_callback=descr2_write_handler
 		}
 };
+
+/*test*/
+char* events[]={"ESP_GATTS_REG_EVT","ESP_GATTS_READ_EVT","ESP_GATTS_WRITE_EVT","ESP_GATTS_EXEC_WRITE_EVT","ESP_GATTS_MTU_EVT","ESP_GATTS_CONF_EVT",
+"ESP_GATTS_UNREG_EVT","ESP_GATTS_CREATE_EVT","ESP_GATTS_ADD_INCL_SRVC_EVT","ESP_GATTS_ADD_CHAR_EVT","ESP_GATTS_ADD_CHAR_DESCR_EVT","ESP_GATTS_DELETE_EVT",
+"ESP_GATTS_START_EVT","ESP_GATTS_STOP_EVT","ESP_GATTS_CONNECT_EVT","ESP_GATTS_DISCONNECT_EVT","ESP_GATTS_OPEN_EVT","ESP_GATTS_CANCEL_OPEN_EVT",
+"ESP_GATTS_CLOSE_EVT","ESP_GATTS_LISTEN_EVT","ESP_GATTS_CONGEST_EVT","ESP_GATTS_RESPONSE_EVT","ESP_GATTS_CREAT_ATTR_TAB_EVT","ESP_GATTS_SET_ATTR_VAL_EVT"};
+
+
+/**/
+
 
 void char1_read_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
 	ESP_LOGI(GATTS_TAG, "char1_read_handler %d - %x\n", param->read.handle, param->read.handle);
@@ -375,7 +390,7 @@ void char1_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 
 void char2_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
 	ESP_LOGI(GATTS_TAG, "char2_write_handler %d - %x\n", param->write.handle,param->write.handle);
-
+	printf("\n####################### NOTIFICATION: \n");
 	if (gl_char[1].char_val!=NULL) {
 		ESP_LOGI(GATTS_TAG, "char2_write_handler char_val %d\n",param->write.len);
 		gl_char[1].char_val->attr_len = param->write.len;
@@ -383,8 +398,47 @@ void char2_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 			gl_char[1].char_val->attr_value[pos]=param->write.value[pos];
 		}
 	}
+	printf("\n %s  - receive: %s\n",__func__, gl_char[1].char_val->attr_value);
+	int n_notice = get_notification((char*)gl_char[1].char_val->attr_value,param->write.len);
+	switch(n_notice){
+		case 1:
+			printf("\n ############## recieve : 1 ======> 1:miss call\n");
+			break;
+		case 2:
+			printf("\n ############## recieve : 2 ======> 1:new sms\n");
+			break;
+		case 3:
+			printf("\n ############## recieve : 3 ======> 1:fb\n");
+			break;
+		case 4:
+			printf("\n ############## recieve : 4 ======> 1:arlet\n");
+			break;
+		case 5:
+			printf("\n ############## recieve : 5 ======> 1:calendar\n");
+			break;
+		default:
+			printf("\n ############## recieve : %d ======> unknown\n",n_notice);
+			break;
+	}
 	ESP_LOGI(GATTS_TAG, "char2_write_handler esp_gatt_rsp_t\n");
     esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+
+	
+}
+int get_notification(char * messages, int messages_len)
+{
+	// message: [x]
+	//char buffer[16]={'\0'};
+	//int len = 16; if(messages_len < 16) len = messages_len;
+	//strncpy ( buffer,messages,len); buffer[len] = '\0';
+	char *tmp = messages; tmp = tmp+1;
+	int n_notice = -1;
+	char s_notice[3];
+	strncpy ( s_notice,tmp,1); s_notice[1] = '\0';
+	n_notice = atoi(s_notice);
+	//printf("\n buffer = %s - tmp = %s - note = %s - %d \n",buffer,tmp,s_notice,n_notice);
+	printf("\n tmp = %s - note = %s - %d \n",tmp,s_notice,n_notice);
+	return n_notice;
 }
 
 void descr1_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
@@ -550,6 +604,7 @@ void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 
 void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param) {
 	esp_err_t ret;
+	printf ("\n\n ####### event = %d - %s \n",event,events[event]);
 	switch (event) {
     case ESP_GATTS_REG_EVT:
 		printf("\nESP_GATTS_REG_EVTDDDDDDDDDDDDDDDDDDDDDDDDD\n");
@@ -806,6 +861,7 @@ void mainTaskkk()
 	esp_event_loop_init(event_handler, NULL);
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+	ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
     wifi_config_t wifi_config = {
 	.sta = {
 	    .ssid = DEFAULT_SSID,

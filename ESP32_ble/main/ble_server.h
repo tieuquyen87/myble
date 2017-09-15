@@ -53,6 +53,7 @@ void descr2_read_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 void descr2_write_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 int getTimeBlink();
 void mainTaskkk();
+int get_notification(char * messages, int messages_len);
 //void dns_found_cb(const char *name, const ip_addr_t *ipaddr, void *callback_arg);
 esp_err_t wifi_event_cb(void *ctx, system_event_t *event);
 #ifdef __cplusplus
